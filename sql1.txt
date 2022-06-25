@@ -1,0 +1,211 @@
+A.
+CREATE VIEW forestation 
+AS
+SELECT f.country_code country_code,f.country_name country_name, f.year curr_year, f.forest_area_sqkm forest_area_sqkm, l.total_area_sq_mi total_area_sq_mi,r.region region,r.income_group income_group,((forest_area_sqkm/(total_area_sq_mi * 2.59))* 100) AS percent
+FROM forest_area f
+JOIN land_area l
+ON (f.year = l.year) AND (l.country_code = f.country_code)
+JOIN regions r
+ON (r.country_code = f.country_code) AND (r.country_code = l.country_code);
+
+
+GLOBAL SITUATION
+
+A.
+SELECT SUM(forest_area_sqkm) total
+FROM forestation
+WHERE region = 'World' AND curr_year = 1990
+
+B.
+SELECT SUM(forest_area_sqkm) total
+FROM forestation
+WHERE region = 'World' AND curr_year = 2016
+
+
+
+
+C.
+
+WITH t1 AS (SELECT region, curr_year, SUM(forest_area_sqkm) total
+			FROM forestation
+			GROUP BY 1,2
+			HAVING region = 'World' AND curr_year = 2016),
+
+t2 AS (SELECT region, curr_year, SUM(forest_area_sqkm) total
+		FROM forestation
+		GROUP BY 1,2
+		HAVING region = 'World' AND curr_year = 1990)
+ SELECT (t1.total - t2.total) change
+ FROM t1
+ JOIN t2
+ ON t1.region = t2.region
+
+
+D.
+WITH t1 AS (SELECT region, curr_year, SUM(forest_area_sqkm) total
+			FROM forestation
+			GROUP BY 1,2
+			HAVING region = 'World' AND curr_year = 2016),
+
+t2 AS (SELECT region, curr_year, SUM(forest_area_sqkm) total
+		FROM forestation
+		GROUP BY 1,2
+		HAVING region = 'World' AND curr_year = 1990)
+ SELECT (((t1.total - t2.total)/t2.total) * 100) as percentage_change
+ FROM t1
+ JOIN t2
+ ON t1.region = t2.region
+
+E.
+WITH t1 AS (SELECT region, curr_year, SUM(forest_area_sqkm) total
+			FROM forestation
+			GROUP BY 1,2
+			HAVING region = 'World' AND curr_year = 2016),
+
+t2 AS (SELECT region, curr_year, SUM(forest_area_sqkm) total
+		FROM forestation
+		GROUP BY 1,2
+		HAVING region = 'World' AND curr_year = 1990),
+ t3 AS (
+    		SELECT (t2.total - t1.total) diff
+ 			FROM t1
+ 			JOIN t2
+ 			ON t1.region = t2.region
+ )
+
+SELECT country_name,(total_area_sq_mi * 2.59) total
+FROM forestation
+WHERE curr_year = 2016 AND (total_area_sq_mi * 2.59)<=(SELECT * FROM t3)
+ORDER BY 2 DESC
+LIMIT 1
+
+
+
+
+2. REGIONAL OUTLOOK
+
+a.
+SELECT  region, SUM(forest_area_sqkm)sum_forest_area_sqkm ,SUM(((total_area_sq_mi)*2.59)) AS sum_total_area_sq_km, (((SUM(forest_area_sqkm)) /(SUM(((total_area_sq_mi)*2.59)))) * 100) fr_perecent
+FROM forestation
+WHERE (curr_year = 2016)
+GROUP BY 1
+HAVING region = 'World'
+
+SELECT  region, SUM(forest_area_sqkm)sum_forest_area_sqkm	,SUM(((total_area_sq_mi)*2.59)) AS sum_total_area_sq_km, (((SUM(forest_area_sqkm)) /(SUM(((total_area_sq_mi)*2.59)))) * 100) fr_perecent
+FROM forestation
+WHERE (curr_year = 2016)
+GROUP BY 1
+ORDER BY 4 DESC
+LIMIT 1
+
+SELECT  region, SUM(forest_area_sqkm)sum_forest_area_sqkm	,SUM(((total_area_sq_mi)*2.59)) AS sum_total_area_sq_km, (((SUM(forest_area_sqkm)) /(SUM(((total_area_sq_mi)*2.59)))) * 100) fr_perecent
+FROM forestation
+WHERE (curr_year = 2016)
+GROUP BY 1
+ORDER BY 4 
+LIMIT 1
+
+b.
+SELECT  region, SUM(forest_area_sqkm)sum_forest_area_sqkm	,SUM(((total_area_sq_mi)*2.59)) AS sum_total_area_sq_km, (((SUM(forest_area_sqkm)) /(SUM(((total_area_sq_mi)*2.59)))) * 100) fr_perecent
+FROM forestation
+WHERE (curr_year = 1990)
+GROUP BY 1
+HAVING region = 'World'
+
+SELECT  region, SUM(forest_area_sqkm)sum_forest_area_sqkm	,SUM(((total_area_sq_mi)*2.59)) AS sum_total_area_sq_km, (((SUM(forest_area_sqkm)) /(SUM(((total_area_sq_mi)*2.59)))) * 100) fr_perecent
+FROM forestation
+WHERE (curr_year = 1990)
+GROUP BY 1
+ORDER BY 4 DESC
+LIMIT 1
+
+SELECT  region, SUM(forest_area_sqkm)sum_forest_area_sqkm	,SUM(((total_area_sq_mi)*2.59)) AS sum_total_area_sq_km, (((SUM(forest_area_sqkm)) /(SUM(((total_area_sq_mi)*2.59)))) * 100) fr_perecent
+FROM forestation
+WHERE (curr_year = 1990)
+GROUP BY 1
+ORDER BY 4 
+LIMIT 1
+
+c.
+SELECT  region,curr_year, SUM(forest_area_sqkm)sum_forest_area_sqkm	,SUM(((total_area_sq_mi)*2.59)) AS sum_total_area_sq_km, (((SUM(forest_area_sqkm)) /(SUM(((total_area_sq_mi)*2.59)))) * 100) fr_perecent
+FROM forestation
+WHERE curr_year = 2016 OR curr_year = 1990
+GROUP BY 1,2
+
+3. COUNTRY-LEVEL DETAIL
+a.
+WITH t1 AS 
+        (SELECT country_code,	country_name,	curr_year, region,	forest_area_sqkm
+        FROM FORESTATION
+        WHERE curr_year = 2016),
+t2 AS (
+  		SELECT country_code,	country_name,	curr_year, region,	forest_area_sqkm
+        FROM FORESTATION
+        WHERE curr_year = 1990
+)
+
+SELECT t1.country_code, t1.country_name,t1.region,t1.forest_area_sqkm fr1 , t2.forest_area_sqkm fr2,(t2.forest_area_sqkm - t1.forest_area_sqkm) difference
+FROM t1
+JOIN t2
+ON t1.country_code = t2.country_code
+WHERE (t2.forest_area_sqkm - t1.forest_area_sqkm) IS NOT NULL AND (t1.country_name != 'World')
+ORDER BY 6 DESC
+LIMIT 5
+
+B.
+
+WITH t1 AS 
+        (SELECT country_code,	country_name,	curr_year, region,	forest_area_sqkm
+        FROM FORESTATION
+        WHERE curr_year = 2016),
+t2 AS (
+  		SELECT country_code,	country_name,	curr_year, region,	forest_area_sqkm
+        FROM FORESTATION
+        WHERE curr_year = 1990
+)
+
+SELECT t1.country_code, t1.country_name,t1.region,t1.forest_area_sqkm fr2016 , t2.forest_area_sqkm fr1990,(((t1.forest_area_sqkm - t2.forest_area_sqkm)/t2.forest_area_sqkm)*100) percent
+FROM t1
+JOIN t2
+ON t1.country_code = t2.country_code
+WHERE (t1.country_name != 'World') AND (((t1.forest_area_sqkm - t2.forest_area_sqkm)/t2.forest_area_sqkm)*100) IS NOT NULL
+ORDER BY 6 
+LIMIT 5
+
+C.
+CREATE VIEW forestation2016
+AS
+SELECT country_code ,country_name,curr_year, forest_area_sqkm ,total_area_sq_mi,((forest_area_sqkm/(total_area_sq_mi * 2.59))* 100) AS percent
+FROM forestation
+WHERE ((forest_area_sqkm/(total_area_sq_mi * 2.59))* 100) IS NOT NULL AND curr_year = 2016
+
+WITH t1 AS (SELECT country_name, percent,
+		CASE
+		WHEN percent <= 25 THEN ' < 25% '
+        WHEN percent > 25 AND percent <= 50 THEN '25% - 50%'
+        WHEN percent > 50 AND percent <= 75 THEN '50% - 75%'
+        ELSE ' 75% - 100%'
+        END AS quartile
+FROM forestation2016)
+
+SELECT quartile, COUNT(*) num_count 
+FROM t1
+GROUP BY 1
+ORDER BY 2
+
+D.
+
+
+
+
+E.
+WITH T1 AS (
+	SELECT percent
+  	FROM
+  	forestation2016
+  	WHERE country_name = 'United States'
+)
+
+SELECT country_name, percent 
+FROM forestation2016
+WHERE percent > (SELECT * FROM t1)
